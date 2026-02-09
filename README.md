@@ -65,4 +65,4 @@ MIT
 
 ## 👨‍💻 Autor
 
-Tu Nombre
+Carlos Rodríguez
