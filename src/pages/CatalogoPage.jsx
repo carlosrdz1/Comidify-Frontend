@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { comidaService } from '../services/comidaService';
 import { ingredienteService } from '../services/ingredienteService';
 import { TipoComida } from '../utils/enums';
+import toast from 'react-hot-toast';
 
 function CatalogoPage() {
   const [comidas, setComidas] = useState([]);
@@ -30,7 +31,7 @@ function CatalogoPage() {
       setComidas(response.data);
     } catch (error) {
       console.error('Error al cargar comidas:', error);
-      alert('Error al cargar las comidas');
+      toast.error('Error al cargar las comidas');
     } finally {
       setLoading(false);
     }
@@ -77,7 +78,7 @@ function CatalogoPage() {
       setModalAbierto(true);
     } catch (error) {
       console.error('Error al cargar comida:', error);
-      alert('Error al cargar los detalles de la comida');
+      toast.error('Error al cargar los detalles de la comida');
     }
   };
 
@@ -85,7 +86,7 @@ function CatalogoPage() {
     e.preventDefault();
 
     if (!formData.nombre.trim()) {
-      alert('El nombre es obligatorio');
+      toast.error('El nombre es obligatorio');
       return;
     }
 
@@ -98,30 +99,30 @@ function CatalogoPage() {
 
       if (modoEdicion) {
         await comidaService.update(comidaSeleccionada.id, data);
-        alert('Comida actualizada correctamente');
+        toast.success('Comida actualizada correctamente');
       } else {
         await comidaService.create(data);
-        alert('Comida creada correctamente');
+        toast.success('Comida creada correctamente');
       }
 
       setModalAbierto(false);
       cargarComidas();
     } catch (error) {
       console.error('Error al guardar comida:', error);
-      alert('Error al guardar la comida');
+      toast.error('Error al guardar la comida');
     }
   };
 
   const handleEliminar = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar esta comida?')) return;
+    if (!window.confirm('¿Estás seguro de eliminar esta comida?')) return;
 
     try {
       await comidaService.delete(id);
-      alert('Comida eliminada correctamente');
+      toast.success('Comida eliminada correctamente');
       cargarComidas();
     } catch (error) {
       console.error('Error al eliminar comida:', error);
-      alert('Error al eliminar la comida');
+      toast.error('Error al eliminar la comida');
     }
   };
 

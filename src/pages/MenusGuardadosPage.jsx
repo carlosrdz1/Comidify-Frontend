@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { menuService } from '../services/menuService';
 import { TipoComida, DiaSemana } from '../utils/enums';
+import toast from 'react-hot-toast';
 
 function MenusGuardadosPage() {
   const [menus, setMenus] = useState([]);
@@ -21,7 +22,7 @@ function MenusGuardadosPage() {
       setMenus(response.data);
     } catch (error) {
       console.error('Error al cargar menús:', error);
-      alert('Error al cargar los menús guardados');
+      toast.error('Error al cargar los menús guardados');
     } finally {
       setLoading(false);
     }
@@ -34,7 +35,7 @@ function MenusGuardadosPage() {
       setModalDetalleAbierto(true);
     } catch (error) {
       console.error('Error al cargar detalle:', error);
-      alert('Error al cargar los detalles del menú');
+      toast.error('Error al cargar los detalles del menú');
     }
   };
 
@@ -49,11 +50,11 @@ function MenusGuardadosPage() {
 
     try {
       await menuService.delete(id);
-      alert('Menú eliminado correctamente');
+      toast.success('Menú eliminado correctamente');
       cargarMenus();
     } catch (error) {
       console.error('Error al eliminar menú:', error);
-      alert('Error al eliminar el menú');
+      toast.error('Error al eliminar el menú');
     }
   };
 

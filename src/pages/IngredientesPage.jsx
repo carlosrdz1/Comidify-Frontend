@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ingredienteService } from '../services/ingredienteService';
+import toast from 'react-hot-toast';
 
 function IngredientesPage() {
   const [ingredientes, setIngredientes] = useState([]);
@@ -22,7 +23,7 @@ function IngredientesPage() {
       setIngredientes(response.data);
     } catch (error) {
       console.error('Error al cargar ingredientes:', error);
-      alert('Error al cargar los ingredientes');
+      toast.error('Error al cargar los ingredientes');
     } finally {
       setLoading(false);
     }
@@ -46,17 +47,17 @@ function IngredientesPage() {
     e.preventDefault();
 
     if (!nombre.trim()) {
-      alert('El nombre es obligatorio');
+      toast.error('El nombre es obligatorio');
       return;
     }
 
     try {
       if (modoEdicion) {
         await ingredienteService.update(ingredienteSeleccionado.id, { nombre });
-        alert('Ingrediente actualizado correctamente');
+        toast.success('Ingrediente actualizado correctamente');
       } else {
         await ingredienteService.create({ nombre });
-        alert('Ingrediente creado correctamente');
+        toast.success('Ingrediente creado correctamente');
       }
 
       setModalAbierto(false);
@@ -64,9 +65,9 @@ function IngredientesPage() {
     } catch (error) {
       console.error('Error al guardar ingrediente:', error);
       if (error.response?.status === 409) {
-        alert('Ya existe un ingrediente con ese nombre');
+        toast.error('Ya existe un ingrediente con ese nombre');
       } else {
-        alert('Error al guardar el ingrediente');
+        toast.error('Error al guardar el ingrediente');
       }
     }
   };
@@ -76,14 +77,14 @@ function IngredientesPage() {
 
     try {
       await ingredienteService.delete(id);
-      alert('Ingrediente eliminado correctamente');
+      toast.success('Ingrediente eliminado correctamente');
       cargarIngredientes();
     } catch (error) {
       console.error('Error al eliminar ingrediente:', error);
       if (error.response?.status === 400) {
-        alert('No se puede eliminar el ingrediente porque está siendo usado en una o más comidas');
+        toast.error('No se puede eliminar el ingrediente porque está siendo usado en una o más comidas');
       } else {
-        alert('Error al eliminar el ingrediente');
+        toast.error('Error al eliminar el ingrediente');
       }
     }
   };

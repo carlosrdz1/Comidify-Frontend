@@ -7,8 +7,7 @@ import { menuService } from '../services/menuService';
 import { comidaService } from '../services/comidaService';
 import html2pdf from 'html2pdf.js';
 import PDFGrid from '../components/Grid/PDFGrid';
-
-
+import toast from 'react-hot-toast';
 
 function HomePage() {
   const [vistaActual, setVistaActual] = useState('grid');
@@ -29,7 +28,7 @@ function HomePage() {
         setMenuComidas(menu.comidas || []);
         setMenuGuardadoId(menu.id);
         localStorage.removeItem('menuACagar'); // Limpiar después de cargar
-        alert(`Menú "${menu.nombre}" cargado correctamente`);
+        toast.success(`Menú "${menu.nombre}" cargado correctamente`);
       } catch (error) {
         console.error('Error al cargar menú:', error);
       }
@@ -43,14 +42,14 @@ function HomePage() {
 
 const exportarPDF = () => {
   if (menuComidas.length === 0) {
-    alert('El grid está vacío. Agrega comidas primero.');
+    toast.error('El grid está vacío. Agrega comidas primero.');
     return;
   }
 
   const element = document.getElementById('weekly-grid-pdf');
   
   if (!element) {
-    alert('No se pudo encontrar el grid');
+    toast.error('No se pudo encontrar el grid');
     return;
   }
 
@@ -102,7 +101,7 @@ const exportarPDF = () => {
 
   const abrirModalGuardar = () => {
     if (menuComidas.length === 0) {
-      alert('Primero agrega comidas al menú');
+      toast.error('Primero agrega comidas al menú');
       return;
     }
     setModalGuardarAbierto(true);
@@ -110,7 +109,7 @@ const exportarPDF = () => {
 
   const guardarMenu = async () => {
     if (!nombreMenu.trim()) {
-      alert('El nombre del menú es obligatorio');
+      toast.error('El nombre del menú es obligatorio');
       return;
     }
 
@@ -128,17 +127,17 @@ const exportarPDF = () => {
       setMenuGuardadoId(response.data.id);
       setModalGuardarAbierto(false);
       setNombreMenu('');
-      alert('¡Menú guardado correctamente! Ahora puedes ver la lista de compras.');
+      toast.success('¡Menú guardado correctamente! Ahora puedes ver la lista de compras.');
       setVistaActual('lista');
     } catch (error) {
       console.error('Error al guardar menú:', error);
-      alert('Error al guardar el menú');
+      toast.error('Error al guardar el menú');
     }
   };
 
   const llenarGridRandomizer = async () => {
   if (menuComidas.length > 0) {
-    if (!confirm('Esto reemplazará el menú actual. ¿Continuar?')) {
+    if (!window.confirm('Esto reemplazará el menú actual. ¿Continuar?')) {
       return;
     }
   }
@@ -150,7 +149,7 @@ const exportarPDF = () => {
     const todasLasComidas = response.data;
 
     if (todasLasComidas.length === 0) {
-      alert('No hay comidas en el catálogo. Crea algunas primero.');
+      toast.error('No hay comidas en el catálogo. Crea algunas primero.');
       return;
     }
 
@@ -194,17 +193,17 @@ const exportarPDF = () => {
     }
 
     setMenuComidas(nuevasComidas);
-    alert(`¡Grid llenado con ${nuevasComidas.length} comidas aleatorias!`);
+    toast.success(`¡Grid llenado con ${nuevasComidas.length} comidas aleatorias!`);
   } catch (error) {
     console.error('Error al randomizar:', error);
-    alert('Error al generar el menú aleatorio');
+    toast.error('Error al generar el menú aleatorio');
   } finally {
     setLoadingRandom(false);
   }
 };
 
   const limpiarGrid = () => {
-      if (!confirm('¿Estás seguro de limpiar todo el menú?')) return;
+      if (!window.confirm('¿Estás seguro de limpiar todo el menú?')) return;
       setMenuComidas([]);
       setMenuGuardadoId(null);
     };
@@ -265,7 +264,7 @@ const exportarPDF = () => {
                 disabled={loadingRandom}
                 className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loadingRandom ? '🎲 Generando...' : '🎲 Randomizer'}
+                {loadingRandom ? '🎲 Generando...' : '🎲 Genera Menú Aleatorio'}
               </button>
 
               <button 

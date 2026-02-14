@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authService } from '../services/authService';
+import toast from 'react-hot-toast';
 
 function RegisterPage() {
   const [nombre, setNombre] = useState('');
@@ -22,7 +23,7 @@ function RegisterPage() {
       login(response.data);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data || 'Error al registrarse');
+      toast.error(err.response?.data || 'Error al registrarse');
     } finally {
       setLoading(false);
     }
@@ -37,12 +38,6 @@ function RegisterPage() {
         <h2 className="text-xl text-center text-gray-600 mb-6">
           Crear Cuenta
         </h2>
-
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            {error}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
