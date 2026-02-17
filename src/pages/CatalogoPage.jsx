@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { comidaService } from '../services/comidaService';
 import { ingredienteService } from '../services/ingredienteService';
 import { TipoComida } from '../utils/enums';
@@ -11,6 +11,10 @@ function CatalogoPage() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [comidaSeleccionada, setComidaSeleccionada] = useState(null);
+  const [busquedaIngrediente, setBusquedaIngrediente] = useState('');
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const [ingredientesFiltrados, setIngredientesFiltrados] = useState([]);
+  const inputIngredienteRef = useRef(null);  
 
   // Formulario
   const [formData, setFormData] = useState({
@@ -22,6 +26,33 @@ function CatalogoPage() {
   useEffect(() => {
     cargarComidas();
     cargarIngredientes();
+  }, []);
+
+  useEffect(() => {
+    if (busquedaIngrediente.trim() === '') {
+      setIngredientesFiltrados([]);
+      return;
+    }
+
+    const filtrados = ingredientes.filter(ing =>
+      ing.nombre.toLowerCase().includes(busquedaIngrediente.toLowerCase())
+    );
+    
+    setIngredientesFiltrados(filtrados);
+  }, [busquedaIngrediente, ingredientes]);
+
+  useEffect(() => {
+    const handleClickFuera = (event) => {
+      if (!event.target.closest('.autocomplete-container')) {
+        setMostrarSugerencias(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickFuera);
+    
+    return () => {
+      document.removeEventListener('mousedown', handleClickFuera);
+    };
   }, []);
 
   const cargarComidas = async () => {
@@ -54,6 +85,8 @@ function CatalogoPage() {
       tipoComida: 1,
       ingredientes: [],
     });
+    setBusquedaIngrediente('');  
+    setMostrarSugerencias(false);  
     setModalAbierto(true);
   };
 
@@ -126,14 +159,69 @@ function CatalogoPage() {
     }
   };
 
-  const agregarIngrediente = () => {
-    setFormData({
-      ...formData,
-      ingredientes: [
-        ...formData.ingredientes,
-        { ingredienteId: ingredientes[0]?.id || 0, cantidad: '', unidad: '' },
-      ],
-    });
+  const agregarIngrediente = async () => {
+    if (!busquedaIngrediente.trim()) {
+      toast.error('Escribe el nombre del ingrediente');
+      return;
+    }
+
+    try {
+      let ingredienteId;
+      let nombreIngrediente = busquedaIngrediente.trim();
+      
+      const ingredienteExistente = ingredientes.find(
+        ing => ing.nombre.toLowerCase() === nombreIngrediente.toLowerCase()
+      );
+
+      if (ingredienteExistente) {
+        ingredienteId = ingredienteExistente.id;
+      } else {
+        const nuevoIngredienteData = {
+          nombre: nombreIngrediente
+        };
+        
+        const response = await ingredienteService.create(nuevoIngredienteData);
+        ingredienteId = response.data.id;
+        
+        setIngredientes([response.data, ...ingredientes]);
+        
+        toast.success(`Ingrediente "${response.data.nombre}" creado`);
+      }
+
+      const yaTieneEsteIngrediente = formData.ingredientes.some(
+        ic => ic.ingredienteId === ingredienteId
+      );
+
+      if (yaTieneEsteIngrediente) {
+        toast.error('Este ingrediente ya está en la comida');
+        return;
+      }
+
+      setFormData({
+        ...formData,
+        ingredientes: [
+          { ingredienteId: ingredienteId, cantidad: '', unidad: '' },
+          ...formData.ingredientes
+        ]
+      });
+
+      setBusquedaIngrediente('');
+      setMostrarSugerencias(false);
+
+      setTimeout(() => {
+        inputIngredienteRef.current?.focus();
+        setMostrarSugerencias(true);  // AGREGAR ESTA LÍNEA
+      }, 10);  // CAMBIAR DE 0 A 10
+      
+    } catch (error) {
+      console.error('Error al agregar ingrediente:', error);
+      toast.error('Error al agregar ingrediente');
+    }
+  };
+
+  const seleccionarIngredienteDeLista = (ingrediente) => {
+    setBusquedaIngrediente(ingrediente.nombre);
+    setMostrarSugerencias(false);
   };
 
   const actualizarIngrediente = (index, campo, valor) => {
@@ -240,7 +328,11 @@ function CatalogoPage() {
                   {modoEdicion ? '✏️ Editar Comida' : '➕ Nueva Comida'}
                 </h2>
                 <button
-                  onClick={() => setModalAbierto(false)}
+                  onClick={() => {
+                    setModalAbierto(false);
+                    setBusquedaIngrediente('');
+                    setMostrarSugerencias(false);
+                  }}
                   className="text-white hover:text-gray-200 text-2xl"
                 >
                   ×
@@ -300,6 +392,44 @@ function CatalogoPage() {
                     ➕ Agregar
                   </button>
                 </div>
+
+                <div className="mb-3 autocomplete-container relative">
+                  <input
+                    ref={inputIngredienteRef}
+                    type="text"
+                    value={busquedaIngrediente}
+                    onChange={(e) => setBusquedaIngrediente(e.target.value)}
+                    onFocus={() => setMostrarSugerencias(true)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          agregarIngrediente();
+                        }
+                      }}
+                    placeholder="Escribir ingrediente"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+
+                  {mostrarSugerencias && busquedaIngrediente && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                      {ingredientesFiltrados.length > 0 ? (
+                        ingredientesFiltrados.map(ing => (
+                          <div
+                            key={ing.id}
+                            onClick={() => seleccionarIngredienteDeLista(ing)}
+                            className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm"
+                          >
+                            {ing.nombre}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="px-4 py-2 text-gray-500 text-sm">
+                          No se encontró "{busquedaIngrediente}". Se creará automáticamente al agregar.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>             
 
                 {formData.ingredientes.length === 0 ? (
                   <p className="text-gray-500 text-sm">
@@ -367,7 +497,11 @@ function CatalogoPage() {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setModalAbierto(false)}
+                  onClick={() => {
+                    setModalAbierto(false);
+                    setBusquedaIngrediente('');
+                    setMostrarSugerencias(false);
+                  }}
                   className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
                 >
                   Cancelar
