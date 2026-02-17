@@ -13,11 +13,48 @@ function HomePage() {
   const [vistaActual, setVistaActual] = useState('grid');
   const [menuComidas, setMenuComidas] = useState([]);
   const [menuGuardadoId, setMenuGuardadoId] = useState(null);
+  const [menuGuardadoNombre, setMenuGuardadoNombre] = useState('');
   const [modalAbierto, setModalAbierto] = useState(false);
   const [modalGuardarAbierto, setModalGuardarAbierto] = useState(false);
   const [nombreMenu, setNombreMenu] = useState('');
   const [celdaSeleccionada, setCeldaSeleccionada] = useState({ dia: null, tipo: null });
   const [loadingRandom, setLoadingRandom] = useState(false);
+  
+// NUEVO: Cargar grid desde localStorage al iniciar
+  useEffect(() => {
+    // 1. Intentar leer el grid guardado del localStorage
+    const gridGuardado = localStorage.getItem('comidify_grid_borrador');
+    
+    // 2. Si existe algo guardado
+    if (gridGuardado) {
+      try {
+        // 3. Convertir el texto JSON de vuelta a objeto JavaScript
+        const datosParseados = JSON.parse(gridGuardado);
+        
+        // 4. Cargar los datos al estado
+        setMenuComidas(datosParseados);
+        
+        console.log('✅ Grid cargado desde localStorage:', datosParseados);
+      } catch (error) {
+        // 5. Si hay error al parsear (datos corruptos), no hacer nada
+        console.error('Error al cargar grid desde localStorage:', error);
+      }
+    }
+  }, []); // ← El [] significa "ejecutar SOLO cuando el componente se monta"
+
+  // ✅ NUEVO: Guardar grid en localStorage cada vez que cambia
+  useEffect(() => {
+    // Solo guardar si hay comidas (no guardar array vacío)
+    if (menuComidas.length > 0) {
+      // 1. Convertir el array a texto JSON
+      const jsonString = JSON.stringify(menuComidas);
+      
+      // 2. Guardar en localStorage
+      localStorage.setItem('comidify_grid_borrador', jsonString);
+      
+      console.log('Grid guardado automáticamente en localStorage');
+    }
+  }, [menuComidas]); // ← Ejecutar cada vez que menuComidas cambie
 
   // NUEVO: Cargar menú desde localStorage
   useEffect(() => {
@@ -129,6 +166,10 @@ const exportarPDF = () => {
       setNombreMenu('');
       toast.success('¡Menú guardado correctamente! Ahora puedes ver la lista de compras.');
       setVistaActual('lista');
+
+      localStorage.removeItem('comidify_grid_borrador');
+      console.log('🗑️ Borrador eliminado de localStorage (menú guardado)');
+      
     } catch (error) {
       console.error('Error al guardar menú:', error);
       toast.error('Error al guardar el menú');
@@ -206,6 +247,9 @@ const exportarPDF = () => {
       if (!window.confirm('¿Estás seguro de limpiar todo el menú?')) return;
       setMenuComidas([]);
       setMenuGuardadoId(null);
+
+      localStorage.removeItem('comidify_grid_borrador');
+      console.log('Borrador eliminado de localStorage (grid limpiado)');
     };
 
     const eliminarComidaDelGrid = (dia, tipo) => {
