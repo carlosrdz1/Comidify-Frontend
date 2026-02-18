@@ -53,7 +53,6 @@ function IngredientesPage() {
     nuevaLista[index] = valor;
     setListaIngredientes(nuevaLista);
     
-    // Limpiar validación cuando el usuario edita
     const nuevosInvalidos = new Set(ingredientesInvalidos);
     nuevosInvalidos.delete(index);
     setIngredientesInvalidos(nuevosInvalidos);
@@ -74,7 +73,6 @@ function IngredientesPage() {
     const nuevaLista = listaIngredientes.filter((_, i) => i !== index);
     setListaIngredientes(nuevaLista);
     
-    // Ajustar índices de inválidos
     const nuevosInvalidos = new Set();
     ingredientesInvalidos.forEach(i => {
       if (i < index) nuevosInvalidos.add(i);
@@ -87,7 +85,6 @@ function IngredientesPage() {
     e.preventDefault();
 
     if (modoEdicion) {
-      // Edición individual (comportamiento original)
       if (!nombre.trim()) {
         toast.error('El nombre es obligatorio');
         return;
@@ -107,7 +104,6 @@ function IngredientesPage() {
         }
       }
     } else {
-      // Creación múltiple (nuevo comportamiento)
       const ingredientesLimpios = listaIngredientes
         .map(ing => ing.trim())
         .filter(ing => ing !== '');
@@ -117,7 +113,6 @@ function IngredientesPage() {
         return;
       }
 
-      // Validar duplicados en la lista misma
       const duplicadosInternos = new Set();
       const vistos = new Set();
       ingredientesLimpios.forEach((ing, index) => {
@@ -129,7 +124,6 @@ function IngredientesPage() {
         }
       });
 
-      // Validar duplicados con la base de datos
       const duplicadosDB = new Set();
       for (let i = 0; i < ingredientesLimpios.length; i++) {
         const nombreLower = ingredientesLimpios[i].toLowerCase();
@@ -141,7 +135,6 @@ function IngredientesPage() {
         }
       }
 
-      // Combinar duplicados
       const todosInvalidos = new Set([...duplicadosInternos, ...duplicadosDB]);
 
       if (todosInvalidos.size > 0) {
@@ -150,7 +143,6 @@ function IngredientesPage() {
         return;
       }
 
-      // Guardar todos los ingredientes válidos
       try {
         let creados = 0;
         let errores = 0;
@@ -200,22 +192,22 @@ function IngredientesPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-3 md:p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 mb-4 md:mb-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-2xl md:text-3xl font-bold text-gray-800">
                 🥕 Ingredientes
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-sm md:text-base text-gray-600 mt-1">
                 Administra tus ingredientes
               </p>
             </div>
             <button
               onClick={abrirModalNuevo}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg"
+              className="w-full sm:w-auto bg-blue-600 text-white px-4 md:px-6 py-2 md:py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg text-sm md:text-base"
             >
               ➕ Nuevo Ingrediente
             </button>
@@ -228,19 +220,19 @@ function IngredientesPage() {
               placeholder="Buscar ingrediente..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
             />
           </div>
         </div>
 
         {/* Lista de ingredientes */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-gray-500 text-sm md:text-base">
             Cargando ingredientes...
           </div>
         ) : ingredientes.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-lg p-12 text-center">
-            <p className="text-gray-500 text-lg">
+          <div className="bg-white rounded-lg shadow-lg p-8 md:p-12 text-center">
+            <p className="text-gray-500 text-base md:text-lg">
               {busqueda
                 ? 'No se encontraron ingredientes con ese nombre'
                 : 'No hay ingredientes registrados. ¡Crea tu primer ingrediente!'}
@@ -248,75 +240,75 @@ function IngredientesPage() {
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="px-6 py-3 text-left font-semibold">Nombre</th>
-                  <th className="px-6 py-3 text-right font-semibold">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {ingredientes.map((ingrediente) => (
-                  <tr key={ingrediente.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 text-gray-800 font-medium">
-                      {ingrediente.nombre}
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-2">
-                      <button
-                        onClick={() => abrirModalEditar(ingrediente)}
-                        className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium"
-                      >
-                        ✏️ Editar
-                      </button>
-                      <button
-                        onClick={() => handleEliminar(ingrediente.id)}
-                        className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-                      >
-                        🗑️ Eliminar
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[400px]">
+                <thead className="bg-blue-600 text-white">
+                  <tr>
+                    <th className="px-3 md:px-6 py-3 text-left font-semibold text-sm md:text-base">Nombre</th>
+                    <th className="px-3 md:px-6 py-3 text-right font-semibold text-sm md:text-base">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {ingredientes.map((ingrediente) => (
+                    <tr key={ingrediente.id} className="hover:bg-gray-50">
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-gray-800 font-medium text-sm md:text-base">
+                        {ingrediente.nombre}
+                      </td>
+                      <td className="px-3 md:px-6 py-3 md:py-4 text-right space-x-1 md:space-x-2">
+                        <button
+                          onClick={() => abrirModalEditar(ingrediente)}
+                          className="bg-yellow-500 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-yellow-600 transition-colors text-xs md:text-sm font-medium"
+                        >
+                          ✏️ Editar
+                        </button>
+                        <button
+                          onClick={() => handleEliminar(ingrediente.id)}
+                          className="bg-red-500 text-white px-2 md:px-4 py-1 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm font-medium"
+                        >
+                          🗑️ Eliminar
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
 
       {/* Modal de Crear/Editar */}
       {modalAbierto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="bg-blue-600 text-white p-4 rounded-t-lg">
-              <h2 className="text-xl font-bold">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[95vh] md:max-h-auto overflow-y-auto">
+            <div className="bg-blue-600 text-white p-3 md:p-4 rounded-t-lg">
+              <h2 className="text-lg md:text-xl font-bold">
                 {modoEdicion ? '✏️ Editar Ingrediente' : '➕ Nuevo Ingrediente'}
               </h2>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6">
+            <form onSubmit={handleSubmit} className="p-4 md:p-6">
               {modoEdicion ? (
-                // EDICIÓN INDIVIDUAL (comportamiento original)
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                     Nombre del ingrediente *
                   </label>
                   <input
                     type="text"
                     value={nombre}
                     onChange={(e) => setNombre(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
                     placeholder="Ej: Tomate"
                     autoFocus
                     required
                   />
                 </div>
               ) : (
-                // CREACIÓN MÚLTIPLE (nuevo comportamiento)
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2">
                     Ingredientes (uno por línea, presiona Enter para agregar más)
                   </label>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2 max-h-80 md:max-h-96 overflow-y-auto">
                     {listaIngredientes.map((ingrediente, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <input
@@ -330,7 +322,7 @@ function IngredientesPage() {
                               agregarNuevaLinea(index);
                             }
                           }}
-                          className={`flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:border-transparent ${
+                          className={`flex-1 border rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:border-transparent text-sm md:text-base ${
                             ingredientesInvalidos.has(index)
                               ? 'border-red-500 bg-red-50 focus:ring-red-500'
                               : 'border-gray-300 focus:ring-blue-500'
@@ -342,7 +334,7 @@ function IngredientesPage() {
                           <button
                             type="button"
                             onClick={() => eliminarLinea(index)}
-                            className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm"
+                            className="bg-red-500 text-white px-2 md:px-3 py-2 rounded-lg hover:bg-red-600 text-sm"
                           >
                             ×
                           </button>
@@ -351,7 +343,7 @@ function IngredientesPage() {
                     ))}
                   </div>
                   {ingredientesInvalidos.size > 0 && (
-                    <p className="text-red-600 text-sm mt-2">
+                    <p className="text-red-600 text-xs md:text-sm mt-2">
                       Los ingredientes en rojo están duplicados o ya existen
                     </p>
                   )}
@@ -362,13 +354,13 @@ function IngredientesPage() {
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
-                  className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm md:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                  className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm md:text-base"
                 >
                   {modoEdicion ? 'Actualizar' : `Crear ${listaIngredientes.filter(i => i.trim()).length || 0}`}
                 </button>

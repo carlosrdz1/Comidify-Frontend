@@ -297,3 +297,15 @@ body {
     font-size: 1.5rem;
   }
 }
+/* Mejoras para móvil */
+@media (max-width: 768px) {
+  /* Evitar zoom en inputs en iOS */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Botones táctiles más grandes */
+  button {
+    min-height: 44px;
+  }
+}

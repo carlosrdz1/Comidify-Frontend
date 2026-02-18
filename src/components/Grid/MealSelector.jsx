@@ -39,13 +39,18 @@ function MealSelector({ isOpen, onClose, onSelect, diaSeleccionado, tipoSeleccio
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[95vh] md:max-h-[80vh] flex flex-col">
         {/* Header */}
-        <div className="bg-blue-600 text-white p-4 rounded-t-lg">
+        <div className="bg-blue-600 text-white p-3 md:p-4 rounded-t-lg">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold">
-              Seleccionar Comida - {diaSeleccionado} / {tipoSeleccionado}
+            <h2 className="text-base md:text-xl font-bold">
+              <span className="hidden md:inline">
+                Seleccionar Comida - {diaSeleccionado} / {tipoSeleccionado}
+              </span>
+              <span className="md:hidden">
+                {diaSeleccionado} - {tipoSeleccionado}
+              </span>
             </h2>
             <button
               onClick={onClose}
@@ -57,28 +62,28 @@ function MealSelector({ isOpen, onClose, onSelect, diaSeleccionado, tipoSeleccio
         </div>
 
         {/* Filtros */}
-        <div className="p-4 border-b border-gray-200 space-y-3">
+        <div className="p-3 md:p-4 border-b border-gray-200 space-y-3">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
               Buscar por nombre:
             </label>
             <input
               type="text"
-              placeholder="Escribe el nombre de la comida..."
+              placeholder="Escribe el nombre..."
               value={filtroNombre}
               onChange={(e) => setFiltroNombre(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
               Filtrar por tipo:
             </label>
             <select
               value={filtroTipo}
               onChange={(e) => setFiltroTipo(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm md:text-base"
             >
               <option value="">Todos los tipos</option>
               {Object.entries(TipoComida).map(([key, value]) => (
@@ -91,13 +96,13 @@ function MealSelector({ isOpen, onClose, onSelect, diaSeleccionado, tipoSeleccio
         </div>
 
         {/* Lista de comidas */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4">
           {loading ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 text-sm md:text-base">
               Cargando comidas...
             </div>
           ) : comidas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 text-sm md:text-base">
               No se encontraron comidas
             </div>
           ) : (
@@ -106,19 +111,20 @@ function MealSelector({ isOpen, onClose, onSelect, diaSeleccionado, tipoSeleccio
                 <div
                   key={comida.id}
                   onClick={() => handleSelect(comida)}
-                  className="border border-gray-200 rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
+                  className="border border-gray-200 rounded-lg p-3 md:p-4 hover:bg-blue-50 hover:border-blue-300 cursor-pointer transition-colors"
                 >
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold text-gray-800">
+                      <h3 className="font-semibold text-gray-800 text-sm md:text-base">
                         {comida.nombre}
                       </h3>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-xs md:text-sm text-gray-600">
                         {TipoComida[comida.tipoComida]}
                       </p>
                       {comida.ingredientes && comida.ingredientes.length > 0 && (
                         <p className="text-xs text-gray-500 mt-1">
-                          Ingredientes: {comida.ingredientes.map(i => i.nombreIngrediente).join(', ')}
+                          <span className="hidden sm:inline">Ingredientes: </span>
+                          {comida.ingredientes.map(i => i.nombreIngrediente).join(', ')}
                         </p>
                       )}
                     </div>
@@ -130,10 +136,10 @@ function MealSelector({ isOpen, onClose, onSelect, diaSeleccionado, tipoSeleccio
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 p-3 md:p-4">
           <button
             onClick={onClose}
-            className="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+            className="w-full bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm md:text-base"
           >
             Cancelar
           </button>

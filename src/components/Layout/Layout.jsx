@@ -24,26 +24,29 @@ function Layout({ children }) {
           className={`shadow-lg sticky top-0 z-30 ${theme === 'rustico' ? 'header-rustico' : 'bg-blue-600'}`}
           style={{ backgroundColor: theme === 'default' ? 'var(--bg-header)' : undefined }}
         >
-          <div className="px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="px-2 md:px-4 py-2 md:py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-2 md:space-x-4">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden hover:opacity-80"
+                className="lg:hidden hover:opacity-80 p-2"
                 style={{ color: 'var(--text-white)' }}
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
               <div>
                 <h1 
-                  className={`text-2xl md:text-3xl font-bold ${theme === 'rustico' ? 'logo-rustico' : 'text-white'}`}
+                  className={`text-lg md:text-2xl lg:text-3xl font-bold ${theme === 'rustico' ? 'logo-rustico' : 'text-white'}`}
                   style={{ color: theme === 'default' ? 'var(--text-white)' : undefined }}
                 >
-                  {theme === 'rustico' ? '🍳 Mi Menú Familiar - Comidify' : '🍕 Comidify'}
+                  <span className="hidden md:inline">
+                    {theme === 'rustico' ? '🍳 Mi Menú Familiar - Comidify' : '🍕 Comidify'}
+                  </span>
+                  <span className="md:hidden">🍕 Comidify</span>
                 </h1>
                 <p 
-                  className={`text-sm mt-1 ${theme === 'rustico' ? 'text-yellow-100' : 'text-blue-100'}`}
+                  className={`text-xs md:text-sm mt-1 ${theme === 'rustico' ? 'text-yellow-100' : 'text-blue-100'}`}
                   style={{ color: theme === 'default' ? 'rgba(255,255,255,0.8)' : undefined }}
                 >
                   Hola, {user?.nombre}
@@ -51,10 +54,10 @@ function Layout({ children }) {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 md:space-x-2">
               <button
                 onClick={toggleTheme}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all text-sm md:text-base ${
                   theme === 'rustico' 
                     ? 'btn-rustico' 
                     : 'bg-white text-blue-600 hover:bg-blue-50'
@@ -66,13 +69,14 @@ function Layout({ children }) {
 
               <button
                 onClick={handleLogout}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium transition-all text-sm md:text-base ${
                   theme === 'rustico' 
                     ? 'btn-rustico' 
                     : 'bg-red-600 text-white hover:bg-red-700'
                 }`}
               >
-                Salir
+                <span className="hidden sm:inline">Salir</span>
+                <span className="sm:hidden">🚪</span>
               </button>
             </div>
           </div>

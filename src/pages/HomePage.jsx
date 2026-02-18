@@ -22,41 +22,27 @@ function HomePage() {
   
 // NUEVO: Cargar grid desde localStorage al iniciar
   useEffect(() => {
-    // 1. Intentar leer el grid guardado del localStorage
     const gridGuardado = localStorage.getItem('comidify_grid_borrador');
     
-    // 2. Si existe algo guardado
     if (gridGuardado) {
       try {
-        // 3. Convertir el texto JSON de vuelta a objeto JavaScript
         const datosParseados = JSON.parse(gridGuardado);
-        
-        // 4. Cargar los datos al estado
         setMenuComidas(datosParseados);
-        
         console.log('✅ Grid cargado desde localStorage:', datosParseados);
       } catch (error) {
-        // 5. Si hay error al parsear (datos corruptos), no hacer nada
         console.error('Error al cargar grid desde localStorage:', error);
       }
     }
-  }, []); // ← El [] significa "ejecutar SOLO cuando el componente se monta"
+  }, []);
 
-  // ✅ NUEVO: Guardar grid en localStorage cada vez que cambia
   useEffect(() => {
-    // Solo guardar si hay comidas (no guardar array vacío)
     if (menuComidas.length > 0) {
-      // 1. Convertir el array a texto JSON
       const jsonString = JSON.stringify(menuComidas);
-      
-      // 2. Guardar en localStorage
       localStorage.setItem('comidify_grid_borrador', jsonString);
-      
       console.log('Grid guardado automáticamente en localStorage');
     }
-  }, [menuComidas]); // ← Ejecutar cada vez que menuComidas cambie
+  }, [menuComidas]);
 
-  // NUEVO: Cargar menú desde localStorage
   useEffect(() => {
     const menuGuardado = localStorage.getItem('menuACagar');
     if (menuGuardado) {
@@ -64,7 +50,7 @@ function HomePage() {
         const menu = JSON.parse(menuGuardado);
         setMenuComidas(menu.comidas || []);
         setMenuGuardadoId(menu.id);
-        localStorage.removeItem('menuACagar'); // Limpiar después de cargar
+        localStorage.removeItem('menuACagar');
         toast.success(`Menú "${menu.nombre}" cargado correctamente`);
       } catch (error) {
         console.error('Error al cargar menú:', error);
@@ -91,7 +77,7 @@ const exportarPDF = () => {
   }
 
   const opt = {
-    margin: [5, 5, 5, 5], // top, right, bottom, left en mm
+    margin: [5, 5, 5, 5],
     filename: `menu-semanal-${new Date().toISOString().split('T')[0]}.pdf`,
     image: { type: 'jpeg', quality: 0.95 },
     html2canvas: { 
@@ -185,7 +171,6 @@ const exportarPDF = () => {
 
   setLoadingRandom(true);
   try {
-    // Obtener todas las comidas del backend
     const response = await comidaService.getAll();
     const todasLasComidas = response.data;
 
@@ -198,27 +183,21 @@ const exportarPDF = () => {
     const dias = Object.keys(DiaSemana);
     const tipos = Object.keys(TipoComida);
 
-    // Para cada día de la semana
     for (const dia of dias) {
-      // Para cada tipo de comida
       for (const tipo of tipos) {
-        // Filtrar comidas que correspondan a este tipo
         const comidasDelTipo = todasLasComidas.filter(
           c => c.tipoComida === parseInt(tipo)
         );
 
         if (comidasDelTipo.length > 0) {
-          // Excluir comidas que ya se usaron (para evitar repetir)
           const comidasDisponibles = comidasDelTipo.filter(
             comida => !nuevasComidas.some(nc => nc.comidaId === comida.id)
           );
 
-          // Si no hay disponibles sin repetir, usar todas del tipo
           const poolComidas = comidasDisponibles.length > 0 
             ? comidasDisponibles 
             : comidasDelTipo;
 
-          // Seleccionar una comida aleatoria
           const comidaRandom = poolComidas[
             Math.floor(Math.random() * poolComidas.length)
           ];
@@ -267,34 +246,36 @@ const exportarPDF = () => {
     <div>
       {/* Tabs */}
       <div className="bg-white shadow">
-        <div className="px-6">
-          <div className="flex space-x-4">
+        <div className="px-3 md:px-6">
+          <div className="flex space-x-2 md:space-x-4">
             <button
               onClick={() => setVistaActual('grid')}
-              className={`py-3 px-6 font-medium border-b-2 transition-colors ${
+              className={`py-2 md:py-3 px-3 md:px-6 font-medium border-b-2 transition-colors text-sm md:text-base ${
                 vistaActual === 'grid'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-blue-600'
               }`}
             >
-              📅 Menú Semanal
+              <span className="hidden sm:inline">📅 Menú Semanal</span>
+              <span className="sm:hidden">📅 Menú</span>
             </button>
             <button
               onClick={() => setVistaActual('lista')}
-              className={`py-3 px-6 font-medium border-b-2 transition-colors ${
+              className={`py-2 md:py-3 px-3 md:px-6 font-medium border-b-2 transition-colors text-sm md:text-base ${
                 vistaActual === 'lista'
                   ? 'border-blue-600 text-blue-600'
                   : 'border-transparent text-gray-600 hover:text-blue-600'
               }`}
             >
-              🛒 Lista de Compras
+              <span className="hidden sm:inline">🛒 Lista de Compras</span>
+              <span className="sm:hidden">🛒 Lista</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Contenido */}
-      <div className="p-6">
+      <div className="p-3 md:p-6">
         {vistaActual === 'grid' ? (
           <>
             <WeeklyGrid 
@@ -302,44 +283,47 @@ const exportarPDF = () => {
               onCellClick={handleCellClick}
               onDeleteCell={eliminarComidaDelGrid}
             />
-            <div className="mt-6 text-center space-x-4 flex flex-wrap justify-center gap-4">
-              <button 
-                onClick={llenarGridRandomizer}
-                disabled={loadingRandom}
-                className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loadingRandom ? '🎲 Generando...' : '🎲 Genera Menú Aleatorio'}
-              </button>
-
-              <button 
-                onClick={limpiarGrid}
-                className="bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg"
-              >
-                🗑️ Limpiar Grid
-              </button>
-
-              <button 
-                onClick={exportarPDF}
-                className="bg-orange-600 text-white px-8 py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium shadow-lg"
-              >
-                📄 Exportar PDF
-              </button>
-                          
-              <button 
-                onClick={abrirModalGuardar}
-                className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg"
-              >
-                💾 Guardar Menú Semanal
-              </button>
-              
-              {menuGuardadoId && (
+            <div className="mt-6 px-2 md:px-0">
+              <div className="flex flex-wrap justify-center gap-2 md:gap-4">
                 <button 
-                  onClick={() => setVistaActual('lista')}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg"
+                  onClick={llenarGridRandomizer}
+                  disabled={loadingRandom}
+                  className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-purple-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                 >
-                  👀 Ver Lista de Compras
+                  {loadingRandom ? '⏳ ...' : '🎲 Randomizer'}
                 </button>
-              )}
+
+                <button 
+                  onClick={exportarPDF}
+                  className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-orange-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-orange-700 transition-colors font-medium shadow-lg text-sm md:text-base"
+                >
+                  📄 PDF
+                </button>
+
+                <button 
+                  onClick={limpiarGrid}
+                  className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-red-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg text-sm md:text-base"
+                >
+                  🗑️ Limpiar
+                </button>
+                          
+                <button 
+                  onClick={abrirModalGuardar}
+                  className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-green-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-green-700 transition-colors font-medium shadow-lg text-sm md:text-base"
+                >
+                  💾 Guardar
+                </button>
+                
+                {menuGuardadoId && (
+                  <button 
+                    onClick={() => setVistaActual('lista')}
+                    className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-blue-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg text-sm md:text-base"
+                  >
+                    <span className="hidden md:inline">👀 Ver Lista</span>
+                    <span className="md:hidden">👀 Lista</span>
+                  </button>
+                )}
+              </div>
             </div>
           </>
         ) : (
@@ -358,13 +342,13 @@ const exportarPDF = () => {
 
       {/* Modal de Guardar Menú */}
       {modalGuardarAbierto && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
-            <div className="bg-green-600 text-white p-4 rounded-t-lg">
-              <h2 className="text-xl font-bold">💾 Guardar Menú Semanal</h2>
+            <div className="bg-green-600 text-white p-3 md:p-4 rounded-t-lg">
+              <h2 className="text-lg md:text-xl font-bold">💾 Guardar Menú Semanal</h2>
             </div>
 
-            <div className="p-6">
+            <div className="p-4 md:p-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Nombre del menú:
               </label>
@@ -373,20 +357,20 @@ const exportarPDF = () => {
                 value={nombreMenu}
                 onChange={(e) => setNombreMenu(e.target.value)}
                 placeholder="Ej: Menú Semana 1"
-                className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full border border-gray-300 rounded-lg px-3 md:px-4 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm md:text-base"
                 autoFocus
               />
 
-              <div className="mt-6 flex space-x-3">
+              <div className="mt-4 md:mt-6 flex space-x-3">
                 <button
                   onClick={() => setModalGuardarAbierto(false)}
-                  className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm md:text-base"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={guardarMenu}
-                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                  className="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-colors font-medium text-sm md:text-base"
                 >
                   Guardar
                 </button>
