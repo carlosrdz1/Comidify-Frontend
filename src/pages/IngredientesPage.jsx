@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ingredienteService } from '../services/ingredienteService';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,9 @@ function IngredientesPage() {
   const [ingredienteSeleccionado, setIngredienteSeleccionado] = useState(null);
   const [nombre, setNombre] = useState('');
   const [busqueda, setBusqueda] = useState('');
+  const [listaIngredientes, setListaIngredientes] = useState(['']); 
+  const [ingredientesInvalidos, setIngredientesInvalidos] = useState(new Set()); 
+  const inputRefs = useRef([]);
 
   useEffect(() => {
     cargarIngredientes();
@@ -33,6 +36,8 @@ function IngredientesPage() {
     setModoEdicion(false);
     setIngredienteSeleccionado(null);
     setNombre('');
+    setListaIngredientes(['']);
+    setIngredientesInvalidos(new Set());
     setModalAbierto(true);
   };
 
@@ -43,31 +48,136 @@ function IngredientesPage() {
     setModalAbierto(true);
   };
 
+  const actualizarIngredienteEnLista = (index, valor) => {
+    const nuevaLista = [...listaIngredientes];
+    nuevaLista[index] = valor;
+    setListaIngredientes(nuevaLista);
+    
+    // Limpiar validación cuando el usuario edita
+    const nuevosInvalidos = new Set(ingredientesInvalidos);
+    nuevosInvalidos.delete(index);
+    setIngredientesInvalidos(nuevosInvalidos);
+  };
+
+  const agregarNuevaLinea = (index) => {
+    const nuevaLista = [...listaIngredientes];
+    nuevaLista.splice(index + 1, 0, '');
+    setListaIngredientes(nuevaLista);
+    setTimeout(() => {
+      inputRefs.current[index + 1]?.focus();
+    }, 50);
+  };
+
+  const eliminarLinea = (index) => {
+    if (listaIngredientes.length === 1) return;
+    
+    const nuevaLista = listaIngredientes.filter((_, i) => i !== index);
+    setListaIngredientes(nuevaLista);
+    
+    // Ajustar índices de inválidos
+    const nuevosInvalidos = new Set();
+    ingredientesInvalidos.forEach(i => {
+      if (i < index) nuevosInvalidos.add(i);
+      else if (i > index) nuevosInvalidos.add(i - 1);
+    });
+    setIngredientesInvalidos(nuevosInvalidos);
+  };    
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nombre.trim()) {
-      toast.error('El nombre es obligatorio');
-      return;
-    }
-
-    try {
-      if (modoEdicion) {
-        await ingredienteService.update(ingredienteSeleccionado.id, { nombre });
-        toast.success('Ingrediente actualizado correctamente');
-      } else {
-        await ingredienteService.create({ nombre });
-        toast.success('Ingrediente creado correctamente');
+    if (modoEdicion) {
+      // Edición individual (comportamiento original)
+      if (!nombre.trim()) {
+        toast.error('El nombre es obligatorio');
+        return;
       }
 
-      setModalAbierto(false);
-      cargarIngredientes();
-    } catch (error) {
-      console.error('Error al guardar ingrediente:', error);
-      if (error.response?.status === 409) {
-        toast.error('Ya existe un ingrediente con ese nombre');
-      } else {
-        toast.error('Error al guardar el ingrediente');
+      try {
+        await ingredienteService.update(ingredienteSeleccionado.id, { nombre });
+        toast.success('Ingrediente actualizado correctamente');
+        setModalAbierto(false);
+        cargarIngredientes();
+      } catch (error) {
+        console.error('Error al guardar ingrediente:', error);
+        if (error.response?.status === 409) {
+          toast.error('Ya existe un ingrediente con ese nombre');
+        } else {
+          toast.error('Error al guardar el ingrediente');
+        }
+      }
+    } else {
+      // Creación múltiple (nuevo comportamiento)
+      const ingredientesLimpios = listaIngredientes
+        .map(ing => ing.trim())
+        .filter(ing => ing !== '');
+
+      if (ingredientesLimpios.length === 0) {
+        toast.error('Agrega al menos un ingrediente');
+        return;
+      }
+
+      // Validar duplicados en la lista misma
+      const duplicadosInternos = new Set();
+      const vistos = new Set();
+      ingredientesLimpios.forEach((ing, index) => {
+        const nombreLower = ing.toLowerCase();
+        if (vistos.has(nombreLower)) {
+          duplicadosInternos.add(index);
+        } else {
+          vistos.add(nombreLower);
+        }
+      });
+
+      // Validar duplicados con la base de datos
+      const duplicadosDB = new Set();
+      for (let i = 0; i < ingredientesLimpios.length; i++) {
+        const nombreLower = ingredientesLimpios[i].toLowerCase();
+        const existe = ingredientes.some(
+          ing => ing.nombre.toLowerCase() === nombreLower
+        );
+        if (existe) {
+          duplicadosDB.add(i);
+        }
+      }
+
+      // Combinar duplicados
+      const todosInvalidos = new Set([...duplicadosInternos, ...duplicadosDB]);
+
+      if (todosInvalidos.size > 0) {
+        setIngredientesInvalidos(todosInvalidos);
+        toast.error('Algunos ingredientes están duplicados o ya existen');
+        return;
+      }
+
+      // Guardar todos los ingredientes válidos
+      try {
+        let creados = 0;
+        let errores = 0;
+
+        for (const nombreIng of ingredientesLimpios) {
+          try {
+            await ingredienteService.create({ nombre: nombreIng });
+            creados++;
+          } catch (error) {
+            console.error(`Error al crear ${nombreIng}:`, error);
+            errores++;
+          }
+        }
+
+        if (creados > 0) {
+          toast.success(`${creados} ingrediente${creados > 1 ? 's' : ''} creado${creados > 1 ? 's' : ''}`);
+        }
+        
+        if (errores > 0) {
+          toast.error(`${errores} ingrediente${errores > 1 ? 's' : ''} no se pudo${errores > 1 ? 'ieron' : ''} crear`);
+        }
+
+        setModalAbierto(false);
+        cargarIngredientes();
+      } catch (error) {
+        console.error('Error al guardar ingredientes:', error);
+        toast.error('Error al guardar los ingredientes');
       }
     }
   };
@@ -184,20 +294,69 @@ function IngredientesPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="p-6">
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre del ingrediente *
-                </label>
-                <input
-                  type="text"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Tomate"
-                  autoFocus
-                  required
-                />
-              </div>
+              {modoEdicion ? (
+                // EDICIÓN INDIVIDUAL (comportamiento original)
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nombre del ingrediente *
+                  </label>
+                  <input
+                    type="text"
+                    value={nombre}
+                    onChange={(e) => setNombre(e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Ej: Tomate"
+                    autoFocus
+                    required
+                  />
+                </div>
+              ) : (
+                // CREACIÓN MÚLTIPLE (nuevo comportamiento)
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Ingredientes (uno por línea, presiona Enter para agregar más)
+                  </label>
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {listaIngredientes.map((ingrediente, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <input
+                          ref={(el) => (inputRefs.current[index] = el)}
+                          type="text"
+                          value={ingrediente}
+                          onChange={(e) => actualizarIngredienteEnLista(index, e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              agregarNuevaLinea(index);
+                            }
+                          }}
+                          className={`flex-1 border rounded-lg px-4 py-2 focus:ring-2 focus:border-transparent ${
+                            ingredientesInvalidos.has(index)
+                              ? 'border-red-500 bg-red-50 focus:ring-red-500'
+                              : 'border-gray-300 focus:ring-blue-500'
+                          }`}
+                          placeholder={`Ingrediente ${index + 1}`}
+                          autoFocus={index === 0}
+                        />
+                        {listaIngredientes.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => eliminarLinea(index)}
+                            className="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 text-sm"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  {ingredientesInvalidos.size > 0 && (
+                    <p className="text-red-600 text-sm mt-2">
+                      Los ingredientes en rojo están duplicados o ya existen
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="flex space-x-3">
                 <button
@@ -211,10 +370,11 @@ function IngredientesPage() {
                   type="submit"
                   className="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
-                  {modoEdicion ? 'Actualizar' : 'Crear'}
+                  {modoEdicion ? 'Actualizar' : `Crear ${listaIngredientes.filter(i => i.trim()).length || 0}`}
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
