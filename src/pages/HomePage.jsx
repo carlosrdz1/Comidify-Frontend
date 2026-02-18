@@ -290,7 +290,7 @@ const exportarPDF = () => {
                   disabled={loadingRandom}
                   className="flex-1 min-w-[140px] md:min-w-0 md:flex-none bg-purple-600 text-white px-3 md:px-8 py-2 md:py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
                 >
-                  {loadingRandom ? '⏳ ...' : '🎲 Randomizer'}
+                  {loadingRandom ? '⏳ ...' : '🎲 Genera Menú Aleatorio'}
                 </button>
 
                 <button 
